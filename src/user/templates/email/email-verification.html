@@ -1,0 +1,18 @@
+{% extends "email-base.html" %}
+{% block body %}
+{% load format_timedelta %}
+
+<p style='font-size:16px !important;color: #013c48;padding-left:15px;'>Hi {{ full_name }},</p>
+<div style="padding-left:15px;">
+    <div ><p style='font-size:16px !important;color: #013c48;'>Please click the link below to verify your email.<br>
+        {%if ttl%}
+            <span style="font-size:12px !important;color: #013c48;">(Link is valid for {{ttl|timedelta:"use_and"}}.)</span><br>
+        {% endif %}
+        {{ link }}</p><br>
+        With Gratitude,<br>
+        Team Project Archive</div>
+    <div>
+    </div>
+
+</div>
+{% endblock %}

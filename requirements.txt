@@ -1,0 +1,12 @@
+Django==4.2.1
+django-environ==0.10.0
+django-filter==23.2
+djangorestframework==3.14.0
+django-phonenumber-field[phonenumbers]==7.1.0django-otp==1.1.6
+djangorestframework-simplejwt==5.2.2
+django-cors-headers==3.14.0
+psycopg2-binary==2.9.6
+waitress==2.1.2
+cryptography==40.0.2
+django-admin-rangefilter==0.10.0
+django-taggit==4.0.0
