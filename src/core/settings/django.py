@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'django_filters',
     'drf_spectacular',
+    'rangefilter',
     'taggit',
     'user',
     'project',
@@ -146,11 +147,6 @@ MEDIA_ROOT = BASE_DIR.joinpath('media')
 # Default: 'django.core.files.storage.FileSystemStorage'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-file-storage
 DEFAULT_FILE_STORAGE='storages.backends.s3boto3.S3Boto3Storage'
-
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Setup support for proxy headers
 # https://docs.djangoproject.com/en/4.2/ref/settings/#std-setting-USE_X_FORWARDED_HOST

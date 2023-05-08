@@ -1,11 +1,13 @@
 from rest_framework.routers import SimpleRouter
 
 from .views import (
-    UserViewSet,
+    ProjectGroupViewSet,
 )
 
+app_name = 'project'
 router = SimpleRouter()
-router.register(r'', UserViewSet, basename="user")
+router.register('group', ProjectGroupViewSet, basename="group")
+router.register('group-invites', ProjectGroupViewSet, basename="group")
 
 urlpatterns = [
 ]+ router.urls

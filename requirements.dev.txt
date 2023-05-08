@@ -1,0 +1,2 @@
+-r requirements.dev.txt
+django-querycount==0.8.3

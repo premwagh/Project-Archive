@@ -1,11 +1,42 @@
 from rest_framework import serializers
 
 from ..settings import user_settings
-from ..models import User
+from ..models import User, Student, Faculty
 
-class UserSerializer(serializers.ModelSerializer):
+class StudentSerializer(serializers.ModelSerializer):
     """
-    User Serializer.
+    User Api.
+    """
+    class Meta:
+        """
+        User Serializer Meta class
+        """
+        model = Student
+        read_only_fields = (
+            'id',
+            'email'
+            'is_staff',
+            'is_superuser',
+            'date_joined',
+            'is_email_verified',
+            'project_group',
+            'created_on',
+            'updated_on',
+        )
+        exclude = (
+            'last_login',
+            'is_active',
+            'groups',
+            'user_permissions',
+            'role',
+            'password',
+        )
+
+
+class StudentCreateSerializer(StudentSerializer):
+
+    """
+    User Api.
     """
     password = serializers.CharField(
         write_only=True,
@@ -13,13 +44,6 @@ class UserSerializer(serializers.ModelSerializer):
         help_text='Leave empty if no change needed',
         style={'input_type': 'password', 'placeholder': 'Password'}
     )
-
-    def validate_email(self, email):
-        email = (email or '').lower()
-        if self.context['view'].action == 'create':
-            if User.objects.filter(email=email).exists():
-                raise serializers.ValidationError("Email address already exists!")
-        return email
 
     def create(self, validated_data):
         user = super().create(validated_data)
@@ -32,41 +56,43 @@ class UserSerializer(serializers.ModelSerializer):
             validated_data.pop('password')
         return super().update(instance, validated_data)
 
-    class Meta:
+    class Meta(StudentSerializer.Meta):
         """
-        User Serializer Meta class
+        Student Serializer Meta class
         """
-        model = User
-        read_only_fields = (
-            'id',
-            'is_staff',
-            'is_superuser',
-            'is_phone_verified',
-            'date_joined',
-            'is_email_verified',
-            'is_mfa_enabled',
-            'is_approved',
-            'approved_on',
-            'approved_by',
-            'created_on',
-            'updated_on',
-        )
         exclude = (
             'last_login',
             'is_active',
             'groups',
             'user_permissions',
+            'role'
         )
-        extra_kwargs = {
-            'phone_number': {'max_length': 16, 'min_length': 10}
-        }
+
+class StudentProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Student
+        fields = (
+            'enrolment_number',
+            'department',
+            'project_group',
+        )
+
+class FacultyProfileSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Faculty
+        fields = (
+            'department',
+        )
 
 
 class UserMeSerializer(serializers.ModelSerializer):
     """
     User Me Serializer.
     """
-
+    student_profile = StudentProfileSerializer()
+    faculty_profile = FacultyProfileSerializer()
     class Meta:
         """
         User Me Serializer Meta class

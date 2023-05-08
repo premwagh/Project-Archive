@@ -1,6 +1,6 @@
-from django.db import models
+from django.db import models, transaction
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-
 from taggit.managers import TaggableManager
 
 from core.db.models.mixins import TimeStampModelMixin
@@ -14,13 +14,11 @@ class ProjectGroup(TimeStampModelMixin):
         FORMATION = "formation", _("Formation")
         CONFORMED = "conformed", _("Conformed")
 
-
     name = models.CharField(max_length=100)
     faculty = models.ForeignKey(
-        'user.User',
+        'user.Faculty',
         on_delete=models.PROTECT,
         related_name='project_groups',
-        limit_choices_to={"role": User.RoleChoices.FACULTY},
     )
     status=models.CharField(_('Status'), choices=StatusChoices.choices, default=StatusChoices.FORMATION)
     conformed_on = models.DateField(_('Conformed On'), null=True, blank=True)
@@ -28,6 +26,8 @@ class ProjectGroup(TimeStampModelMixin):
         "user.Student",
         on_delete=models.PROTECT,
         related_name='conformed_student_groups',
+        null=True,
+        blank=True,
     )
     created_by = models.OneToOneField(
         "user.Student",
@@ -35,6 +35,54 @@ class ProjectGroup(TimeStampModelMixin):
         related_name='created_student_groups',
     )
 
+class ProjectGroupInvites(TimeStampModelMixin):
+    class StatusChoices(models.TextChoices):
+        PENDING = "pending", _("Pending")
+        ACCEPTED = "accepted", _("Accepted")
+        REJECTED = "rejected", _("Rejected")
+
+    project_group = models.ForeignKey(
+        ProjectGroup,
+        on_delete=models.PROTECT,
+        related_name='invites',
+    )
+    status=models.CharField(_('Status'), choices=StatusChoices.choices, default=StatusChoices.PENDING)
+    student = models.OneToOneField(
+        "user.Student",
+        on_delete=models.PROTECT,
+        related_name='invites',
+    )
+    expires_on = models.DateTimeField(_('Expires On'), blank=True)
+    created_by = models.OneToOneField(
+        "user.Student",
+        on_delete=models.PROTECT,
+        related_name='created_invites',
+    )
+
+    @property
+    def is_expired(self):
+        return timezone.now() <= self.expires_on
+
+    def accept_invite(self):
+        if not self.is_expired:
+            with transaction.atomic():
+                self.status = self.StatusChoices.ACCEPTED
+                self.student.project_group = self
+                self.student.save()
+                self.save()
+
+    def reject_invite(self):
+        if not self.is_expired:
+            with transaction.atomic():
+                self.status = self.StatusChoices.REJECTED
+                self.student.project_group = self
+                self.student.save()
+                self.save()
+
+    class Meta():
+        verbose_name = _('Project Group Invite')
+        verbose_name_plural = _('Project Group Invites')
+        unique_together = (("project_group", "student"),)
 
 
 class ProjectIdea(TimeStampModelMixin, models.Model):

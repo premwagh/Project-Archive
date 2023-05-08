@@ -9,10 +9,12 @@ from rest_framework.response import Response
 # from core.swagger.schema import auto_schema_from_dict
 from ..models import (
     User,
+    Student,
 )
 from .permissions import UserPermission
 from .serializers import (
-    UserSerializer,
+    StudentSerializer,
+    StudentCreateSerializer,
     UserMeSerializer,
     ChangePasswordSerializer,
     EmailSerializer,
@@ -34,9 +36,9 @@ class UserViewSet(ModelViewSet):
 
     ordering = ('created_on',)
 
-    queryset = User.objects.get_queryset()
+    queryset = Student.objects.get_queryset()
     permission_classes = (UserPermission,)
-    serializer_class = UserSerializer
+    serializer_class = StudentSerializer
 
     @property
     def is_user_me(self):
@@ -49,6 +51,11 @@ class UserViewSet(ModelViewSet):
         if self.is_user_me:
             return self.request.user
         return super().get_object()
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return StudentCreateSerializer
+        return super().get_serializer_class()
 
     def perform_create(self, serializer):
         instance = serializer.save()

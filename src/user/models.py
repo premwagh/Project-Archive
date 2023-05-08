@@ -1,6 +1,7 @@
 """
 User model defined here.
 """
+from typing import Iterable, Optional
 from django.apps import apps
 from django.db import models
 from django.contrib.auth.models import (
@@ -16,6 +17,15 @@ from core.db.models.mixins import (
     TokenVerificationMixin,
 )
 from .settings import user_settings
+
+class DepartmentChoices(models.TextChoices):
+    INFORMATION_TECHNOLOGY = "information_technology", _(
+        "Information Technology")
+    COMPUTER_SCIENCE = "computer_science", _("Computer Science")
+    ELECTRONICS = "electronics", _("Electronics and Telecommunication")
+    ELECTRICAL = "electrical", _("Electrical")
+    MECHANICAL = "mechanical", _("Mechanical")
+    CIVIL = "civil", _("Civil")
 
 
 class UserManager(DjUserManager):
@@ -76,7 +86,7 @@ class User(TokenVerificationMixin, TimeStampModelMixin, AbstractUser):
         _('Zip code'), max_length=20, blank=True, null=True)
     is_email_verified = models.BooleanField('Is Email Verified', default=False)
     role = models.CharField(
-        _('User Type'), choices=RoleChoices.choices, default=RoleChoices.STUDENT)
+        _('User Role'), choices=RoleChoices.choices, default=RoleChoices.STUDENT)
 
     objects = UserManager()
 
@@ -113,14 +123,7 @@ class User(TokenVerificationMixin, TimeStampModelMixin, AbstractUser):
 
 class Student(User):
 
-    class DepartmentChoices(models.TextChoices):
-        INFORMATION_TECHNOLOGY = "information_technology", _(
-            "Information Technology")
-        COMPUTER_SCIENCE = "computer_science", _("Computer Science")
-        ELECTRONICS = "electronics", _("Electronics and Telecommunication")
-        ELECTRICAL = "electrical", _("Electrical")
-        MECHANICAL = "mechanical", _("Mechanical")
-        CIVIL = "civil", _("Civil")
+    DepartmentChoices = DepartmentChoices
 
     user_ptr = models.OneToOneField(
         User,
@@ -129,29 +132,25 @@ class Student(User):
         parent_link=True,
         primary_key=True,
     )
-    enrolment_number = models.CharField(_('Email'), unique=True, db_index=True)
-    department = models.CharField(_('Email'), choices=DepartmentChoices.choices)
+    enrolment_number = models.CharField(_('Enrolment Number'), unique=True, db_index=True)
+    department = models.CharField(_('department'), choices=DepartmentChoices.choices)
     project_group = models.ForeignKey(
         'project.ProjectGroup',
         verbose_name=_('Project Group'),
         on_delete=models.SET_NULL,
         related_name='students',
-        limit_choices_to={"role": User.RoleChoices.FACULTY},
         null=True,
         blank=True,
     )
 
+    class Meta():
+        verbose_name = _('Student')
+        verbose_name_plural = _('Students')
+
+
 class Faculty(User):
 
-    class DepartmentChoices(models.TextChoices):
-        INFORMATION_TECHNOLOGY = "information_technology", _(
-            "Information Technology")
-        COMPUTER_SCIENCE = "computer_science", _("Computer Science")
-        ELECTRONICS = "electronics", _("Electronics and Telecommunication")
-        ELECTRICAL = "electrical", _("Electrical")
-        MECHANICAL = "mechanical", _("Mechanical")
-        CIVIL = "civil", _("Civil")
-
+    DepartmentChoices = DepartmentChoices
     user_ptr = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
@@ -159,4 +158,9 @@ class Faculty(User):
         parent_link=True,
         primary_key=True,
     )
-    department = models.CharField(_('Email'), choices=DepartmentChoices.choices)
+    department = models.CharField(_('Department'), choices=DepartmentChoices.choices)
+
+    class Meta():
+        verbose_name = _('Faculty')
+        verbose_name_plural = _('Faculties')
+
