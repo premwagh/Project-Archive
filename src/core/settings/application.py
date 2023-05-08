@@ -48,6 +48,7 @@ SIMPLE_JWT = {
 
 REST_USE_JWT = True
 
+PHONENUMBER_DEFAULT_REGION = 'IN'
 
 USER_SETTINGS = {
     "EMAIL_VERIFICATION_TOKEN_TTL": env.int("EMAIL_VERIFICATION_TOKEN_TTL", f"{60 * 60 * 24 * 2}"),
@@ -59,3 +60,4 @@ USER_SETTINGS = {
         "FORGOT_PASSWORD_RESET_LINK_FORMAT", "https://{frontend_domain_name}/auth/reset-password?code={token}"
     ),
 }
+

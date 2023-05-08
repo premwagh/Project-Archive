@@ -54,8 +54,8 @@ class User(TokenVerificationMixin, TimeStampModelMixin, AbstractUser):
     Class implementing a custom user model.
     """
     class RoleChoices(models.TextChoices):
-        STUDENT = "Student", _("Student")
-        FACULTY = "Faculty", _("Faculty")
+        STUDENT = "student", _("Student")
+        FACULTY = "faculty", _("Faculty")
 
     email = models.EmailField(_('Email'), unique=True, db_index=True,)
     phone_number = PhoneNumberField(
@@ -122,6 +122,13 @@ class Student(User):
         MECHANICAL = "mechanical", _("Mechanical")
         CIVIL = "civil", _("Civil")
 
+    user_ptr = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='student_profile',
+        parent_link=True,
+        primary_key=True,
+    )
     enrolment_number = models.CharField(_('Email'), unique=True, db_index=True)
     department = models.CharField(_('Email'), choices=DepartmentChoices.choices)
     project_group = models.ForeignKey(
@@ -133,3 +140,23 @@ class Student(User):
         null=True,
         blank=True,
     )
+
+class Faculty(User):
+
+    class DepartmentChoices(models.TextChoices):
+        INFORMATION_TECHNOLOGY = "information_technology", _(
+            "Information Technology")
+        COMPUTER_SCIENCE = "computer_science", _("Computer Science")
+        ELECTRONICS = "electronics", _("Electronics and Telecommunication")
+        ELECTRICAL = "electrical", _("Electrical")
+        MECHANICAL = "mechanical", _("Mechanical")
+        CIVIL = "civil", _("Civil")
+
+    user_ptr = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='faculty_profile',
+        parent_link=True,
+        primary_key=True,
+    )
+    department = models.CharField(_('Email'), choices=DepartmentChoices.choices)

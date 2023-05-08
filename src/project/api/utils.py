@@ -28,7 +28,7 @@ def send_password_reset(user):
     )
     link = user_settings.FORGOT_PASSWORD_RESET_LINK_FORMAT.format(
         token=token,
-        frontend_domain_name=user_settings.FORGOT_PASSWORD_RESET_LINK_FRONTEND_ORIGIN,
+        frontend_origin=user_settings.FORGOT_PASSWORD_RESET_LINK_FRONTEND_ORIGIN,
     )
     send_template_mail(
         template="email/password-reset.html",
