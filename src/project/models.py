@@ -6,6 +6,7 @@ from taggit.managers import TaggableManager
 
 from core.db.models.mixins import TimeStampModelMixin
 from core.db.fields import PercentField
+from core.ml_functions import uniqueness_percentile_against_data_list
 from user.models import User
 
 from .settings import project_settings
@@ -78,14 +79,14 @@ class ProjectGroupInvite(TimeStampModelMixin):
             with transaction.atomic():
                 self.status = self.StatusChoices.ACCEPTED
                 self.student.project_group = self.project_group
-                self.student.save()
-                self.save()
+                self.student.save(update_fields=['project_group'])
+                self.save(update_fields=['status'])
 
     def reject_invite(self):
         if not self.is_expired:
             with transaction.atomic():
                 self.status = self.StatusChoices.REJECTED
-                self.save()
+                self.save(update_fields=['status'])
 
     class Meta():
         verbose_name = _('Project Group Invite')
@@ -121,3 +122,14 @@ class ProjectIdea(TimeStampModelMixin, models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+    def calculate_uniqueness(self, save=False):
+        qs = self._meta.default_manager.get_queryset()
+        if self.id:
+            qs = qs.objects.exclude(id=self.id)
+        self.uniqueness = uniqueness_percentile_against_data_list(
+            self.report_content,
+            qs.values_list('report_content', flat=True),
+        )
+        if save:
+            self.save(update_fields=['uniqueness'])

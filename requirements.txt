@@ -10,3 +10,10 @@ waitress==2.1.2
 cryptography==40.0.2
 django-admin-rangefilter==0.10.0
 django-taggit==4.0.0
+
+#ML
+scikit-learn==1.2.2
+numpy==1.24.3
+scipy==1.10.1
+joblib==1.2.0
+threadpoolctl==3.1.0
