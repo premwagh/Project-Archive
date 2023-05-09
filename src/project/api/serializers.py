@@ -74,9 +74,6 @@ class ProjectGroupSerializer(serializers.ModelSerializer):
 
 
 class ProjectGroupInviteCreateSerializer(serializers.ModelSerializer):
-    """
-    User Serializer.
-    """
 
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user.student_profile
@@ -84,9 +81,6 @@ class ProjectGroupInviteCreateSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
     class Meta:
-        """
-        User Serializer Meta class
-        """
         model = ProjectGroupInvite
         read_only_fields = (
             'id',
@@ -107,4 +101,31 @@ class ProjectGroupInviteCreateSerializer(serializers.ModelSerializer):
             'created_by',
             'created_on',
             'updated_on',
+        )
+
+
+class ProjectIdeaSerializer(serializers.ModelSerializer):
+
+    def create(self, validated_data):
+        validated_data['created_by'] = self.context['request'].user.student_profile
+        validated_data['project_group'] = self.context['request'].user.student_profile.project_group
+        return super().create(validated_data)
+
+    class Meta:
+        model = ProjectIdea
+        read_only_fields = (
+            'id',
+            'project_group',
+            'uniqueness',
+            'status',
+            'approved_on',
+            'completed_on',
+            'created_on',
+            'updated_on',
+        )
+        fields = (
+            'title',
+            'report_content',
+            'abstract_content',
+            'tags',
         )

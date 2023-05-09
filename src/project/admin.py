@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import (
     ProjectGroup,
     ProjectGroupInvite,
+    ProjectIdea,
 )
 
 
@@ -13,5 +14,9 @@ class ProjectGroupAdmin(admin.ModelAdmin):
 
 @admin.register(ProjectGroupInvite)
 class ProjectGroupInviteAdmin(admin.ModelAdmin):
+    pass
+
+@admin.register(ProjectIdea)
+class ProjectIdeaAdmin(admin.ModelAdmin):
     pass
 

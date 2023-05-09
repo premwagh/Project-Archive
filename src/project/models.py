@@ -11,6 +11,7 @@ from user.models import User
 
 from .settings import project_settings
 
+
 def get_invite_expiry():
     return timezone.now() + timedelta(seconds=project_settings.PROJECT_GROUP_INVITE_TTL)
 
@@ -63,7 +64,8 @@ class ProjectGroupInvite(TimeStampModelMixin):
         on_delete=models.PROTECT,
         related_name='invites',
     )
-    expires_on = models.DateTimeField(_('Expires On'), default=get_invite_expiry)
+    expires_on = models.DateTimeField(
+        _('Expires On'), default=get_invite_expiry)
     created_by = models.ForeignKey(
         "user.User",
         on_delete=models.PROTECT,
@@ -104,32 +106,40 @@ class ProjectIdea(TimeStampModelMixin, models.Model):
         REJECTED = "rejected", _("Rejected")
 
     title = models.CharField(_('Title'), max_length=255)
+    project_group = models.ForeignKey(
+        'project.ProjectGroup',
+        verbose_name=_('Project Group'),
+        on_delete=models.PROTECT,
+        related_name='ideas',
+    )
     report_content = models.TextField(_('Report Content'))
     abstract_content = models.TextField(_('Abstract Content'))
+    uniqueness = PercentField(_('Uniqueness'), default=0)
+    tags = TaggableManager()
     status = models.CharField(
         _('Status'), choices=StatusChoices.choices, default=StatusChoices.NEW)
     approved_on = models.DateField(_('Approved On'), null=True, blank=True)
     completed_on = models.DateField(_('Completed On'), null=True, blank=True)
-    uniqueness = PercentField(_('uniqueness'), default=0)
-    project_group = models.ForeignKey(
-        'project.ProjectGroup',
-        verbose_name=_('Project Idea'),
-        on_delete=models.PROTECT,
-        related_name='ideas',
-        limit_choices_to={"role": User.RoleChoices.FACULTY},
-    )
-    tags = TaggableManager()
 
     def __str__(self) -> str:
         return self.title
 
-    def calculate_uniqueness(self, save=False):
-        qs = self._meta.default_manager.get_queryset()
-        if self.id:
-            qs = qs.objects.exclude(id=self.id)
-        self.uniqueness = uniqueness_percentile_against_data_list(
-            self.report_content,
-            qs.values_list('report_content', flat=True),
-        )
-        if save:
-            self.save(update_fields=['uniqueness'])
+    def calculate_uniqueness(self, force=False, save=False):
+        if self.status not in (
+            self.StatusChoices.APPROVED,
+            self.StatusChoices.COMPLETED,
+        ) or force:
+            qs = self._meta.default_manager.get_queryset().filter(
+                status__in=(
+                    self.StatusChoices.APPROVED,
+                    self.StatusChoices.COMPLETED,
+                ),
+            )
+            if self.id:
+                qs = qs.objects.exclude(id=self.id)
+            self.uniqueness = uniqueness_percentile_against_data_list(
+                self.report_content,
+                qs.values_list('report_content', flat=True),
+            )
+            if save:
+                self.save(update_fields=['uniqueness'])
