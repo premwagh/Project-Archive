@@ -3,24 +3,30 @@ from rest_framework import status
 from rest_framework.viewsets import (
     ModelViewSet,
     ReadOnlyModelViewSet,
-    GenericViewSet,
-    mixins,
 )
 from rest_framework import serializers
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
+import django_filters
+
 from core.drf.utils import response_error_msg, response_success_msg
+from ..settings import project_settings
 from ..models import (
     ProjectGroup,
     ProjectGroupInvite,
+    ProjectIdea,
 )
-from ..settings import project_settings
-from .permissions import ProjectGroupsPermission, ProjectGroupInvitePermission
+from .permissions import (
+    ProjectGroupsPermission,
+    ProjectGroupInvitePermission,
+    ProjectIdeaPermission,
+)
 from .serializers import (
     ProjectGroupSerializer,
-    ProjectGroupInviteCreateSerializer
+    ProjectGroupInviteCreateSerializer,
+    ProjectIdeaSerializer,
 )
 
 
@@ -76,11 +82,27 @@ class ProjectGroupViewSet(ModelViewSet):
         return super().create(request, *args, **kwargs)
 
 
+class ProjectGroupInviteFilterSet(django_filters.FilterSet):
+    """
+    Facility FilterSet
+    """
+
+    class Meta:
+        model = ProjectGroupInvite
+        fields = {
+            'status':     ['exact', 'in'],
+            'created_by': ['exact', 'in'],
+        }
+
+
 class ProjectGroupInviteViewSet(ReadOnlyModelViewSet):
     """
     get: List all the invite.
     """
 
+    filterset_class = ProjectGroupInviteFilterSet
+    ordering_fields = '__all__'
+    search_fields = ['status', 'profile_category']
     ordering = ('created_on',)
 
     queryset = ProjectGroupInvite.objects.get_queryset()
@@ -123,3 +145,40 @@ class ProjectGroupInviteViewSet(ReadOnlyModelViewSet):
             return response_error_msg("Invite is expired.")
         instance.reject_invite()
         return response_success_msg("invite is rejected.")
+
+
+class ProjectIdeaFilterSet(django_filters.FilterSet):
+    """
+    Facility FilterSet
+    """
+    tags = django_filters.CharFilter(field_name='tags__name', lookup_expr='exact')
+    tags__iexact = django_filters.CharFilter(field_name='tags__name', lookup_expr='iexact')
+    tags__in = django_filters.CharFilter(field_name='tags__name', lookup_expr='in')
+
+
+    class Meta:
+        model = ProjectIdea
+        fields = {
+            'title':       ['icontains', 'exact', 'in'],
+            'status':     ['exact', 'in'],
+            'uniqueness': ['gt', 'gte', 'lt', 'lte', 'range'],
+            'completed_on': ['year', 'year__gt', 'year__gte', 'year__lt', 'year__lte', 'range'],
+            'approved_on': ['year', 'year__gt', 'year__gte', 'year__lt', 'year__lte', 'range'],
+            'created_on': ['year', 'year__gt', 'year__gte', 'year__lt', 'year__lte', 'range', 'date', 'date__range'],
+        }
+
+
+class ProjectIdeaViewSet(ReadOnlyModelViewSet):
+    """
+    get: List all the invite.
+    """
+
+    filterset_class = ProjectIdeaFilterSet
+    ordering_fields = '__all__'
+    search_fields = ['status', 'profile_category']
+    ordering = ('created_on',)
+
+    queryset = ProjectIdea.objects.get_queryset()
+    permission_classes = (ProjectIdeaPermission,)
+    serializer_class = ProjectIdeaSerializer
+

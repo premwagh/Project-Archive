@@ -2,6 +2,7 @@ from datetime import timedelta
 from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
 from taggit.managers import TaggableManager
 
 from core.db.models.mixins import TimeStampModelMixin
