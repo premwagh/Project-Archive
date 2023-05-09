@@ -1,3 +1,17 @@
 from django.contrib import admin
 
-# Register your models here.
+from .models import (
+    ProjectGroup,
+    ProjectGroupInvite,
+)
+
+
+@admin.register(ProjectGroup)
+class ProjectGroupAdmin(admin.ModelAdmin):
+    pass
+
+
+@admin.register(ProjectGroupInvite)
+class ProjectGroupInviteAdmin(admin.ModelAdmin):
+    pass
+

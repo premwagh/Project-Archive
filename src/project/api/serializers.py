@@ -1,7 +1,41 @@
 from rest_framework import serializers
 
-from ..models import ProjectGroup, ProjectGroupInvites, ProjectIdea
+from ..models import (
+    ProjectGroup,
+    ProjectGroupInvite,
+    ProjectIdea,
+)
+
 from .serializer_fields import FacultyField
+
+
+class ProjectGroupInviteListSerializer(serializers.ListSerializer):
+
+    def to_representation(self, data):
+        data = data.exclude(
+            status__in=(
+                ProjectGroupInvite.StatusChoices.ACCEPTED,
+            )
+        )
+        return super().to_representation(data)
+
+
+class NestedPendingProjectGroupInviteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        list_serializer_class = ProjectGroupInviteListSerializer
+        model = ProjectGroupInvite
+        fields = (
+            'id',
+            'project_group',
+            'is_expired',
+            'status',
+            'student',
+            'expires_on',
+            'created_by',
+            'created_on',
+            'updated_on',
+        )
 
 
 class ProjectGroupSerializer(serializers.ModelSerializer):
@@ -9,6 +43,9 @@ class ProjectGroupSerializer(serializers.ModelSerializer):
     User Serializer.
     """
     faculty = FacultyField()
+    invites = NestedPendingProjectGroupInviteSerializer(
+        many=True,
+    )
 
     def create(self, validated_data):
         request = self.context.get('request')
@@ -24,6 +61,7 @@ class ProjectGroupSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'id',
             'status',
+            'invites',
             # 'faculty',
             'conformed_on',
             'conformed_by',
@@ -40,7 +78,6 @@ class ProjectGroupInviteCreateSerializer(serializers.ModelSerializer):
     User Serializer.
     """
 
-
     def create(self, validated_data):
         validated_data['created_by'] = self.context['request'].user.student_profile
         validated_data['project_group'] = self.context['view'].get_object()
@@ -50,12 +87,24 @@ class ProjectGroupInviteCreateSerializer(serializers.ModelSerializer):
         """
         User Serializer Meta class
         """
-        model = ProjectGroupInvites
-        fields = (
-            'student',
+        model = ProjectGroupInvite
+        read_only_fields = (
+            'id',
+            'project_group',
+            'status',
+            # 'student',
+            'expires_on',
+            'created_by',
+            'created_on',
+            'updated_on',
         )
-
-
-
-
-
+        fields = (
+            'id',
+            'project_group',
+            'status',
+            'student',
+            'expires_on',
+            'created_by',
+            'created_on',
+            'updated_on',
+        )

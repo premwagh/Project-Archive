@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from user.models import Faculty, User
+from user.models import User
 
 class FacultySerializer(serializers.ModelSerializer):
     """
@@ -11,7 +11,7 @@ class FacultySerializer(serializers.ModelSerializer):
         """
         User Serializer Meta class
         """
-        model = Faculty
+        model = User
         fields = (
             'id',
             'email',
@@ -19,18 +19,16 @@ class FacultySerializer(serializers.ModelSerializer):
             'last_name',
             'phone_number',
             'department',
-            'created_on',
-            'updated_on',
         )
 
 
 
 class FacultyField(serializers.RelatedField):
-    queryset = Faculty.objects.all()
+    queryset = User.objects.filter(role=User.RoleChoices.FACULTY)
 
     def to_representation(self, obj):
-        return obj.pk
-        # return FacultySerializer(obj).data
+        # return obj.pk
+        return FacultySerializer(obj).data
 
     def to_internal_value(self, data):
         queryset = self.get_queryset()

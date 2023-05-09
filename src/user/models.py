@@ -18,15 +18,6 @@ from core.db.models.mixins import (
 )
 from .settings import user_settings
 
-class DepartmentChoices(models.TextChoices):
-    INFORMATION_TECHNOLOGY = "information_technology", _(
-        "Information Technology")
-    COMPUTER_SCIENCE = "computer_science", _("Computer Science")
-    ELECTRONICS = "electronics", _("Electronics and Telecommunication")
-    ELECTRICAL = "electrical", _("Electrical")
-    MECHANICAL = "mechanical", _("Mechanical")
-    CIVIL = "civil", _("Civil")
-
 
 class UserManager(DjUserManager):
 
@@ -52,6 +43,7 @@ class UserManager(DjUserManager):
     def create_superuser(self, email=None, password=None, **extra_fields):
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("role", User.RoleChoices.FACULTY)
         if extra_fields.get("is_staff") is not True:
             raise ValueError("Superuser must have is_staff=True.")
         if extra_fields.get("is_superuser") is not True:
@@ -66,6 +58,15 @@ class User(TokenVerificationMixin, TimeStampModelMixin, AbstractUser):
     class RoleChoices(models.TextChoices):
         STUDENT = "student", _("Student")
         FACULTY = "faculty", _("Faculty")
+
+    class DepartmentChoices(models.TextChoices):
+        INFORMATION_TECHNOLOGY = "information_technology", _(
+            "Information Technology")
+        COMPUTER_SCIENCE = "computer_science", _("Computer Science")
+        ELECTRONICS = "electronics", _("Electronics and Telecommunication")
+        ELECTRICAL = "electrical", _("Electrical")
+        MECHANICAL = "mechanical", _("Mechanical")
+        CIVIL = "civil", _("Civil")
 
     email = models.EmailField(_('Email'), unique=True, db_index=True,)
     phone_number = PhoneNumberField(
@@ -87,12 +88,13 @@ class User(TokenVerificationMixin, TimeStampModelMixin, AbstractUser):
     is_email_verified = models.BooleanField('Is Email Verified', default=False)
     role = models.CharField(
         _('User Role'), choices=RoleChoices.choices, default=RoleChoices.STUDENT)
+    department = models.CharField(_('department'), choices=DepartmentChoices.choices)
 
     objects = UserManager()
 
     EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['phone_number']
+    REQUIRED_FIELDS = ['phone_number', 'department']
     username = None
 
     def __str__(self):
@@ -123,7 +125,6 @@ class User(TokenVerificationMixin, TimeStampModelMixin, AbstractUser):
 
 class Student(User):
 
-    DepartmentChoices = DepartmentChoices
 
     user_ptr = models.OneToOneField(
         User,
@@ -133,7 +134,6 @@ class Student(User):
         primary_key=True,
     )
     enrolment_number = models.CharField(_('Enrolment Number'), unique=True, db_index=True)
-    department = models.CharField(_('department'), choices=DepartmentChoices.choices)
     project_group = models.ForeignKey(
         'project.ProjectGroup',
         verbose_name=_('Project Group'),
@@ -149,18 +149,7 @@ class Student(User):
 
 
 class Faculty(User):
-
-    DepartmentChoices = DepartmentChoices
-    user_ptr = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name='faculty_profile',
-        parent_link=True,
-        primary_key=True,
-    )
-    department = models.CharField(_('Department'), choices=DepartmentChoices.choices)
-
-    class Meta():
+    class Meta:
+        proxy = True
         verbose_name = _('Faculty')
         verbose_name_plural = _('Faculties')
-

@@ -35,6 +35,7 @@ class BaseUserAdmin(DjUserAdmin):
                     "date_of_birth",
                     "phone_number",
                     "is_email_verified",
+                    "department",
                 )
             },
         ),
@@ -66,7 +67,7 @@ class BaseUserAdmin(DjUserAdmin):
             _("Info"),
             {
                 "fields": (
-                    "created_on"
+                    "created_on",
                     "updated_on",
                     "last_login",
                     "date_joined",
@@ -84,8 +85,8 @@ class BaseUserAdmin(DjUserAdmin):
         ("updated_on", DateTimeRangeFilter),
     )
     user_readonly_fields = (
-        "phone_number",
         "email",
+        "phone_number",
         "is_active",
         "is_staff",
         "created_on",
@@ -103,7 +104,7 @@ class BaseUserAdmin(DjUserAdmin):
             None,
             {
                 "classes": ("wide",),
-                "fields": ("email", "phone_number", "password1", "password2"),
+                "fields": ("email", "phone_number", "password1", "password2", "department"),
             },
         ),
     )

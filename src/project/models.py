@@ -1,3 +1,4 @@
+from datetime import timedelta
 from django.db import models, transaction
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -7,6 +8,10 @@ from core.db.models.mixins import TimeStampModelMixin
 from core.db.fields import PercentField
 from user.models import User
 
+from .settings import project_settings
+
+def get_invite_expiry():
+    return timezone.now() + timedelta(seconds=project_settings.PROJECT_GROUP_INVITE_TTL)
 
 
 class ProjectGroup(TimeStampModelMixin):
@@ -16,26 +21,30 @@ class ProjectGroup(TimeStampModelMixin):
 
     name = models.CharField(max_length=100)
     faculty = models.ForeignKey(
-        'user.Faculty',
+        'user.User',
         on_delete=models.PROTECT,
         related_name='project_groups',
+        limit_choices_to={"role": User.RoleChoices.FACULTY},
     )
-    status=models.CharField(_('Status'), choices=StatusChoices.choices, default=StatusChoices.FORMATION)
+    status = models.CharField(
+        _('Status'), choices=StatusChoices.choices, default=StatusChoices.FORMATION)
     conformed_on = models.DateField(_('Conformed On'), null=True, blank=True)
     conformed_by = models.ForeignKey(
-        "user.Student",
+        "user.User",
         on_delete=models.PROTECT,
         related_name='conformed_student_groups',
         null=True,
         blank=True,
     )
     created_by = models.OneToOneField(
-        "user.Student",
+        "user.User",
         on_delete=models.PROTECT,
         related_name='created_student_groups',
     )
 
-class ProjectGroupInvites(TimeStampModelMixin):
+
+class ProjectGroupInvite(TimeStampModelMixin):
+
     class StatusChoices(models.TextChoices):
         PENDING = "pending", _("Pending")
         ACCEPTED = "accepted", _("Accepted")
@@ -46,28 +55,29 @@ class ProjectGroupInvites(TimeStampModelMixin):
         on_delete=models.PROTECT,
         related_name='invites',
     )
-    status=models.CharField(_('Status'), choices=StatusChoices.choices, default=StatusChoices.PENDING)
-    student = models.OneToOneField(
+    status = models.CharField(
+        _('Status'), choices=StatusChoices.choices, default=StatusChoices.PENDING)
+    student = models.ForeignKey(
         "user.Student",
         on_delete=models.PROTECT,
         related_name='invites',
     )
-    expires_on = models.DateTimeField(_('Expires On'), blank=True)
-    created_by = models.OneToOneField(
-        "user.Student",
+    expires_on = models.DateTimeField(_('Expires On'), default=get_invite_expiry)
+    created_by = models.ForeignKey(
+        "user.User",
         on_delete=models.PROTECT,
         related_name='created_invites',
     )
 
     @property
     def is_expired(self):
-        return timezone.now() <= self.expires_on
+        return timezone.now() >= self.expires_on
 
     def accept_invite(self):
         if not self.is_expired:
             with transaction.atomic():
                 self.status = self.StatusChoices.ACCEPTED
-                self.student.project_group = self
+                self.student.project_group = self.project_group
                 self.student.save()
                 self.save()
 
@@ -75,8 +85,6 @@ class ProjectGroupInvites(TimeStampModelMixin):
         if not self.is_expired:
             with transaction.atomic():
                 self.status = self.StatusChoices.REJECTED
-                self.student.project_group = self
-                self.student.save()
                 self.save()
 
     class Meta():
@@ -97,7 +105,8 @@ class ProjectIdea(TimeStampModelMixin, models.Model):
     title = models.CharField(_('Title'), max_length=255)
     report_content = models.TextField(_('Report Content'))
     abstract_content = models.TextField(_('Abstract Content'))
-    status = models.CharField(_('Status'), choices=StatusChoices.choices, default=StatusChoices.NEW)
+    status = models.CharField(
+        _('Status'), choices=StatusChoices.choices, default=StatusChoices.NEW)
     approved_on = models.DateField(_('Approved On'), null=True, blank=True)
     completed_on = models.DateField(_('Completed On'), null=True, blank=True)
     uniqueness = PercentField(_('uniqueness'), default=0)
@@ -112,5 +121,3 @@ class ProjectIdea(TimeStampModelMixin, models.Model):
 
     def __str__(self) -> str:
         return self.title
-
-

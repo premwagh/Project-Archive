@@ -1,7 +1,9 @@
 from rest_framework import serializers
 
+from project.api.serializers import ProjectGroup
 from ..settings import user_settings
-from ..models import User, Student, Faculty
+from ..models import User, Student
+
 
 class StudentSerializer(serializers.ModelSerializer):
     """
@@ -40,8 +42,7 @@ class StudentCreateSerializer(StudentSerializer):
     """
     password = serializers.CharField(
         write_only=True,
-        required=False,
-        help_text='Leave empty if no change needed',
+        required=True,
         style={'input_type': 'password', 'placeholder': 'Password'}
     )
 
@@ -70,20 +71,16 @@ class StudentCreateSerializer(StudentSerializer):
 
 class StudentProfileSerializer(serializers.ModelSerializer):
 
+    project_group = ProjectGroup()
+
     class Meta:
         model = Student
-        fields = (
-            'enrolment_number',
-            'department',
+        read_only_fields = (
             'project_group',
         )
-
-class FacultyProfileSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model = Faculty
         fields = (
-            'department',
+            'enrolment_number',
+            'project_group',
         )
 
 
@@ -92,7 +89,6 @@ class UserMeSerializer(serializers.ModelSerializer):
     User Me Serializer.
     """
     student_profile = StudentProfileSerializer()
-    faculty_profile = FacultyProfileSerializer()
     class Meta:
         """
         User Me Serializer Meta class
@@ -101,15 +97,11 @@ class UserMeSerializer(serializers.ModelSerializer):
         read_only_fields = (
             'id',
             'email',
+            'role',
             'is_staff',
             'is_superuser',
-            'is_phone_verified',
-            'date_joined',
             'is_email_verified',
-            'is_mfa_enabled',
-            'is_approved',
-            'approved_on',
-            'approved_by',
+            'date_joined',
             'created_on',
             'updated_on',
         )
