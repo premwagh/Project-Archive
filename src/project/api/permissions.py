@@ -68,7 +68,6 @@ class ProjectIdeaPermission(BasePermission):
                     print(e)
                     return False
                 else:
-                    print("*****************************************", project_group.status)
                     return (
                         project_group
                         and project_group.status == ProjectGroup.StatusChoices.CONFORMED

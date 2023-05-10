@@ -46,6 +46,7 @@ class ProjectGroupSerializer(serializers.ModelSerializer):
     faculty = FacultyField()
     invites = NestedPendingProjectGroupInviteSerializer(
         many=True,
+        read_only=True,
     )
 
     def create(self, validated_data):
