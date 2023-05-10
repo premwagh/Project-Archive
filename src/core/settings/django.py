@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'django.contrib.postgres',
     'rest_framework',
     'django_filters',
-    'drf_spectacular',
     'rangefilter',
     'taggit',
     'taggit_helpers',

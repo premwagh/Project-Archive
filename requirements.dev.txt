@@ -1,2 +1,2 @@
--r requirements.dev.txt
+-r requirements.txt
 django-querycount==0.8.3
