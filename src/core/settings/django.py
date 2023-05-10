@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'rangefilter',
     'taggit',
+    'taggit_helpers',
+    'taggit_labels',
     'user',
     'project',
 ]

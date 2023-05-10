@@ -5,6 +5,7 @@ from ..models import (
     ProjectGroupInvite,
     ProjectIdea,
 )
+from taggit.serializers import (TagListSerializerField, TaggitSerializer)
 
 from .serializer_fields import FacultyField
 
@@ -104,10 +105,11 @@ class ProjectGroupInviteCreateSerializer(serializers.ModelSerializer):
         )
 
 
-class ProjectIdeaSerializer(serializers.ModelSerializer):
+class ProjectIdeaSerializer(TaggitSerializer, serializers.ModelSerializer):
+
+    tags = TagListSerializerField()
 
     def create(self, validated_data):
-        validated_data['created_by'] = self.context['request'].user.student_profile
         validated_data['project_group'] = self.context['request'].user.student_profile.project_group
         return super().create(validated_data)
 
@@ -124,8 +126,18 @@ class ProjectIdeaSerializer(serializers.ModelSerializer):
             'updated_on',
         )
         fields = (
+            'id',
+            'project_group',
             'title',
             'report_content',
             'abstract_content',
             'tags',
+            'uniqueness',
+            'status',
+            'approved_on',
+            'completed_on',
+            'submitted_on',
+            'created_on',
+            'updated_on',
+
         )

@@ -30,20 +30,32 @@ class ProjectGroup(TimeStampModelMixin):
         limit_choices_to={"role": User.RoleChoices.FACULTY},
     )
     status = models.CharField(
-        _('Status'), choices=StatusChoices.choices, default=StatusChoices.FORMATION)
-    conformed_on = models.DateField(_('Conformed On'), null=True, blank=True)
+        _('Status'), choices=StatusChoices.choices, default=StatusChoices.FORMATION, editable=False)
+    conformed_on = models.DateField(_('Conformed On'), null=True, blank=True, editable=False)
     conformed_by = models.ForeignKey(
         "user.User",
         on_delete=models.PROTECT,
         related_name='conformed_student_groups',
         null=True,
         blank=True,
+        editable=False,
     )
     created_by = models.OneToOneField(
         "user.User",
         on_delete=models.PROTECT,
         related_name='created_student_groups',
+        editable=False,
     )
+
+    def approve(self):
+        with transaction.atomic():
+            self.status = self.StatusChoices.APPROVED
+            self.approved_on = timezone.now()
+            self.save(update_fields=['status', 'approved_on'])
+
+    def __str__(self) -> str:
+        return self.name
+
 
 
 class ProjectGroupInvite(TimeStampModelMixin):
@@ -72,6 +84,9 @@ class ProjectGroupInvite(TimeStampModelMixin):
         on_delete=models.PROTECT,
         related_name='created_invites',
     )
+
+    def __str__(self) -> str:
+        return f"{self.project_group} | {self.student}"
 
     @property
     def is_expired(self):
@@ -119,8 +134,9 @@ class ProjectIdea(TimeStampModelMixin, models.Model):
     tags = TaggableManager()
     status = models.CharField(
         _('Status'), choices=StatusChoices.choices, default=StatusChoices.NEW)
-    approved_on = models.DateField(_('Approved On'), null=True, blank=True)
-    completed_on = models.DateField(_('Completed On'), null=True, blank=True)
+    submitted_on = models.DateField(_('Submitted On'), null=True, blank=True, editable=False)
+    approved_on = models.DateField(_('Approved On'), null=True, blank=True, editable=False)
+    completed_on = models.DateField(_('Completed On'), null=True, blank=True, editable=False)
 
     def __str__(self) -> str:
         return self.title
@@ -137,10 +153,32 @@ class ProjectIdea(TimeStampModelMixin, models.Model):
                 ),
             )
             if self.id:
-                qs = qs.objects.exclude(id=self.id)
+                qs = qs.exclude(id=self.id)
             self.uniqueness = uniqueness_percentile_against_data_list(
                 self.report_content,
                 qs.values_list('report_content', flat=True),
             )
             if save:
                 self.save(update_fields=['uniqueness'])
+
+    def submit(self):
+        self.status = self.StatusChoices.PENDING
+        self.submitted_on = timezone.now()
+        self.save(update_fields=['status', 'submitted_on'])
+
+    def approve(self):
+        with transaction.atomic():
+            self.status = self.StatusChoices.APPROVED
+            self.approved_on = timezone.now()
+            self.save(update_fields=['status', 'approved_on'])
+
+    def complete(self):
+        with transaction.atomic():
+            self.status = self.StatusChoices.COMPLETED
+            self.completed_on = timezone.now()
+            self.save(update_fields=['status', 'completed_on'])
+
+    def reject(self):
+        with transaction.atomic():
+            self.status = self.StatusChoices.REJECTED
+            self.save(update_fields=['status'])

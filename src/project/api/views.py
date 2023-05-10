@@ -58,6 +58,7 @@ class ProjectGroupViewSet(ModelViewSet):
         if instance.status == ProjectGroup.StatusChoices.CONFORMED:
             return response_success_msg("Group Already conformed.")
         if instance.status == ProjectGroup.StatusChoices.FORMATION:
+            instance.status = ProjectGroup.StatusChoices.CONFORMED
             instance.conformed_on = timezone.now()
             instance.conformed_by = request.user.student_profile
             instance.save()
@@ -168,7 +169,7 @@ class ProjectIdeaFilterSet(django_filters.FilterSet):
         }
 
 
-class ProjectIdeaViewSet(ReadOnlyModelViewSet):
+class ProjectIdeaViewSet(ModelViewSet):
     """
     get: List all the invite.
     """
@@ -181,4 +182,93 @@ class ProjectIdeaViewSet(ReadOnlyModelViewSet):
     queryset = ProjectIdea.objects.get_queryset()
     permission_classes = (ProjectIdeaPermission,)
     serializer_class = ProjectIdeaSerializer
+
+    @action(
+        detail=True,
+        methods=["get"],
+        name="Calculate Uniqueness",
+        url_name="Calculate Uniqueness",
+        url_path="calculate_uniqueness",
+    )
+    def calculate_uniqueness(self, request, *args, **kwargs):
+        """
+        Action to calculate uniqueness of project idea.
+        """
+        instance = self.get_object()
+        if not instance.status in (ProjectIdea.StatusChoices.NEW, ProjectIdea.StatusChoices.PENDING):
+            return response_error_msg(f"Can not perform this action, status is '{instance.status}'.")
+        instance.calculate_uniqueness(save=True)
+        return super().retrieve(request, *args, **kwargs)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        name="Submit",
+        url_name="Submit",
+        url_path="submit",
+        serializer_class=serializers.Serializer,
+    )
+    def submit(self, request, *args, **kwargs):
+        """
+        Action to submit project idea.
+        """
+        instance = self.get_object()
+        if not instance.status == ProjectIdea.StatusChoices.NEW:
+            return response_error_msg(f"Can not perform this action, status is '{instance.status}'.")
+        instance.submit()
+        return response_success_msg("Idea is submitted.")
+
+    @action(
+        detail=True,
+        methods=["post"],
+        name="Approve",
+        url_name="Approve",
+        url_path="approve",
+        serializer_class=serializers.Serializer,
+    )
+    def approve(self, request, *args, **kwargs):
+        """
+        Action to approve project idea.
+        """
+        instance = self.get_object()
+        if not instance.status == ProjectIdea.StatusChoices.PENDING:
+            return response_error_msg(f"Can not perform this action, status is '{instance.status}'.")
+        instance.approve()
+        return response_success_msg("Idea is approved.")
+
+    @action(
+        detail=True,
+        methods=["post"],
+        name="Reject",
+        url_name="Reject",
+        url_path="reject",
+        serializer_class=serializers.Serializer,
+    )
+    def reject(self, request, *args, **kwargs):
+        """
+        Action to reject project idea.
+        """
+        instance = self.get_object()
+        if not instance.status == ProjectIdea.StatusChoices.PENDING:
+            return response_error_msg(f"Can not perform this action, status is '{instance.status}'.")
+        instance.reject()
+        return response_success_msg("Idea is rejected.")
+
+    @action(
+        detail=True,
+        methods=["post"],
+        name="Complete",
+        url_name="Complete",
+        url_path="complete",
+        serializer_class=serializers.Serializer,
+    )
+    def complete(self, request, *args, **kwargs):
+        """
+        Action to complete project idea.
+        """
+        instance = self.get_object()
+        if not instance.status == ProjectIdea.StatusChoices.COMPLETED:
+            return response_error_msg(f"Can not perform this action, status is '{instance.status}'.")
+        instance.approve()
+        return response_success_msg("Idea is Completed.")
 
