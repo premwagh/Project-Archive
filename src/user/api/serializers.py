@@ -1,6 +1,8 @@
+from django.utils import timezone
 from rest_framework import serializers
 
-from project.api.serializers import ProjectGroup
+from project.api.serializers import ProjectGroupSerializer
+from project.models import ProjectGroup, ProjectGroupInvite
 from ..settings import user_settings
 from ..models import User, Student
 
@@ -69,9 +71,34 @@ class StudentCreateSerializer(StudentSerializer):
             'role'
         )
 
+class ProjectGroupSerializer(serializers.ModelSerializer):
+    """
+    User Serializer.
+    """
+
+    class Meta:
+        """
+        User Serializer Meta class
+        """
+        model = ProjectGroup
+        read_only_fields = (
+            'id',
+            'status',
+            'faculty',
+            'conformed_on',
+            'conformed_by',
+            'created_by',
+            'created_on',
+            'updated_on',
+        )
+        exclude = (
+        )
+
+
+
 class StudentProfileSerializer(serializers.ModelSerializer):
 
-    project_group = ProjectGroup()
+    project_group = ProjectGroupSerializer()
 
     class Meta:
         model = Student
@@ -84,11 +111,48 @@ class StudentProfileSerializer(serializers.ModelSerializer):
         )
 
 
+class ProjectGroupInviteListSerializer(serializers.ListSerializer):
+
+    def to_representation(self, data):
+        # data = data.filter(
+        #     status__in=(
+        #         ProjectGroupInvite.StatusChoices.PENDING,
+        #     ),
+        #     expires_on__gt=timezone.now(),
+        # )
+        return super().to_representation(data)
+
+
+class NestedPendingProjectGroupInviteSerializer(serializers.ModelSerializer):
+
+    project_group = ProjectGroupSerializer()
+    class Meta:
+        list_serializer_class = ProjectGroupInviteListSerializer
+        model = ProjectGroupInvite
+        fields = (
+            'id',
+            'project_group',
+            'is_expired',
+            'status',
+            # 'student',
+            'expires_on',
+            'created_by',
+            'created_on',
+            'updated_on',
+        )
+
+
+
 class UserMeSerializer(serializers.ModelSerializer):
     """
     User Me Serializer.
     """
     student_profile = StudentProfileSerializer()
+    pending_invites = NestedPendingProjectGroupInviteSerializer(
+        source='student_profile.invites',
+        many=True,
+        read_only=True,
+    )
     class Meta:
         """
         User Me Serializer Meta class
@@ -98,6 +162,7 @@ class UserMeSerializer(serializers.ModelSerializer):
             'id',
             'email',
             'role',
+            'pending_invites',
             'is_staff',
             'is_superuser',
             'is_email_verified',

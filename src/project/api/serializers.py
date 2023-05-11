@@ -1,12 +1,14 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
+from taggit.serializers import (TagListSerializerField, TaggitSerializer)
+
+from user.models import User
 from ..models import (
     ProjectGroup,
     ProjectGroupInvite,
     ProjectIdea,
 )
-from taggit.serializers import (TagListSerializerField, TaggitSerializer)
-
 from .serializer_fields import FacultyField
 
 
@@ -97,8 +99,9 @@ class ProjectGroupInviteCreateSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'project_group',
-            'status',
             'student',
+            'status',
+            'is_expired',
             'expires_on',
             'created_by',
             'created_on',
@@ -113,6 +116,22 @@ class ProjectIdeaSerializer(TaggitSerializer, serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['project_group'] = self.context['request'].user.student_profile.project_group
         return super().create(validated_data)
+
+    def validate(self, attrs):
+        request = self.context['request']
+        # action = self.context['view'].action
+        if request.user.role == User.RoleChoices.STUDENT:
+                try:
+                    project_group = request.user.student_profile.project_group
+                except ObjectDoesNotExist as e:
+                    raise serializers.ValidationError("Please complete Student profile.")
+                else:
+                    if not project_group:
+                        raise serializers.ValidationError("You do not belong to any group.")
+                    if project_group.status != ProjectGroup.StatusChoices.CONFORMED:
+                        raise serializers.ValidationError(f"Your group '{project_group.name}' is not conformed.")
+
+        return super().validate(attrs)
 
     class Meta:
         model = ProjectIdea

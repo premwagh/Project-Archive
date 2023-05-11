@@ -62,17 +62,7 @@ class ProjectIdeaPermission(BasePermission):
             if request.user.role == User.RoleChoices.FACULTY:
                 return view.action in ('approve', 'complete', 'reject')
             elif request.user.role == User.RoleChoices.STUDENT:
-                try:
-                    project_group = request.user.student_profile.project_group
-                except ObjectDoesNotExist as e:
-                    print(e)
-                    return False
-                else:
-                    return (
-                        project_group
-                        and project_group.status == ProjectGroup.StatusChoices.CONFORMED
-                        and view.action not in ('approve', 'complete', 'reject')
-                    )
+                return view.action not in ('approve', 'complete', 'reject')
         return False
 
     def has_object_permission(self, request, view, obj):
@@ -89,3 +79,4 @@ class ProjectIdeaPermission(BasePermission):
             )
         elif request.user.role == User.RoleChoices.FACULTY:
             return group.faculty_id == request.user.id
+        return False
