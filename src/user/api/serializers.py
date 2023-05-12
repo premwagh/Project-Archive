@@ -7,15 +7,28 @@ from ..settings import user_settings
 from ..models import User, Student
 
 
-class StudentSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer):
     """
     User Api.
     """
+    enrolment_number = serializers.CharField(
+        source='student_profile.enrolment_number',
+        read_only=True,
+    )
+    project_group = serializers.PrimaryKeyRelatedField(
+        source='student_profile.project_group',
+        read_only=True,
+    )
+    project_group_status = serializers.CharField(
+        source='student_profile.project_group.status',
+        read_only=True,
+    )
+
     class Meta:
         """
         User Serializer Meta class
         """
-        model = Student
+        model = User
         read_only_fields = (
             'id',
             'email'
@@ -26,18 +39,20 @@ class StudentSerializer(serializers.ModelSerializer):
             'project_group',
             'created_on',
             'updated_on',
+            'role',
         )
         exclude = (
             'last_login',
             'is_active',
             'groups',
             'user_permissions',
-            'role',
             'password',
+            'date_joined',
+            'is_superuser',
         )
 
 
-class StudentCreateSerializer(StudentSerializer):
+class StudentCreateSerializer(serializers.ModelSerializer):
 
     """
     User Api.
@@ -59,10 +74,22 @@ class StudentCreateSerializer(StudentSerializer):
             validated_data.pop('password')
         return super().update(instance, validated_data)
 
-    class Meta(StudentSerializer.Meta):
+    class Meta:
         """
         Student Serializer Meta class
         """
+        model = Student
+        read_only_fields = (
+            'id',
+            'email'
+            'is_staff',
+            'is_superuser',
+            'date_joined',
+            'is_email_verified',
+            'project_group',
+            'created_on',
+            'updated_on',
+        )
         exclude = (
             'last_login',
             'is_active',

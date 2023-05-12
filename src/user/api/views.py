@@ -6,14 +6,16 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
-# from core.swagger.schema import auto_schema_from_dict
+import django_filters
+
+from project.models import ProjectGroup
 from ..models import (
     User,
     Student,
 )
 from .permissions import UserPermission
 from .serializers import (
-    StudentSerializer,
+    UserSerializer,
     StudentCreateSerializer,
     UserMeSerializer,
     ChangePasswordSerializer,
@@ -25,7 +27,36 @@ from .utils import (
     send_email_verification,
     send_password_reset,
 )
-# from .views_auto_schema import user_viewset_auto_schema
+
+
+class UserFilterSet(django_filters.FilterSet):
+    """
+    Facility FilterSet
+    """
+    enrolment_number = django_filters.CharFilter(field_name='student_profile__enrolment_number', lookup_expr='exact')
+    enrolment_number__iexact = django_filters.CharFilter(field_name='student_profile__enrolment_number', lookup_expr='iexact')
+    enrolment_number__icontains = django_filters.CharFilter(field_name='student_profile__enrolment_number', lookup_expr='icontains')
+    enrolment_number__in = django_filters.CharFilter(field_name='student_profile__enrolment_number', lookup_expr='in')
+
+    project_group = django_filters.CharFilter(field_name='student_profile__project_group', lookup_expr='exact')
+    project_group__isnull = django_filters.BooleanFilter(field_name='student_profile__project_group', lookup_expr='isnull')
+
+
+    project_group_status = django_filters.ChoiceFilter(
+        choices=ProjectGroup.StatusChoices.choices,
+        field_name='student_profile__project_group__status',
+        lookup_expr='exact',
+    )
+    project_group_status__isnull = django_filters.BooleanFilter(field_name='student_profile__project_group__status', lookup_expr='isnull')
+
+    class Meta:
+        model = User
+        fields = {
+            'email':             ['icontains', 'exact', 'in'],
+            'role':              ['exact', 'in'],
+            'department':        ['exact', 'in'],
+            'is_email_verified': ['exact'],
+        }
 
 
 class UserViewSet(ModelViewSet):
@@ -33,12 +64,14 @@ class UserViewSet(ModelViewSet):
     get: List all the users.
     post: Create a new user.
     """
-
+    filterset_class = UserFilterSet
+    ordering_fields = '__all__'
+    search_fields = ['email', 'first_name', 'last_name', 'student_profile__enrolment_number']
     ordering = ('created_on',)
 
-    queryset = Student.objects.get_queryset()
+    queryset = User.objects.get_queryset()
     permission_classes = (UserPermission,)
-    serializer_class = StudentSerializer
+    serializer_class = UserSerializer
 
     @property
     def is_user_me(self):
