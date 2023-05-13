@@ -184,7 +184,7 @@ class ProjectIdeaViewSet(ModelViewSet):
 
     filterset_class = ProjectIdeaFilterSet
     ordering_fields = '__all__'
-    search_fields = ['status', 'profile_category']
+    search_fields = ['title', 'project_group__name']
     ordering = ('created_on',)
 
     queryset = ProjectIdea.objects.get_queryset()
