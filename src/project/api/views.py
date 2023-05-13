@@ -156,16 +156,24 @@ class ProjectIdeaFilterSet(django_filters.FilterSet):
     tags__iexact = django_filters.CharFilter(field_name='tags__name', lookup_expr='iexact')
     tags__in = django_filters.CharFilter(field_name='tags__name', lookup_expr='in')
 
+    project_group_status = django_filters.ChoiceFilter(
+        choices=ProjectGroup.StatusChoices.choices,
+        field_name='project_group__status',
+        lookup_expr='exact'
+    )
+    project_group_faculty = django_filters.CharFilter(field_name='project_group__faculty', lookup_expr='exact')
+
 
     class Meta:
         model = ProjectIdea
         fields = {
-            'title':       ['icontains', 'exact', 'in'],
-            'status':     ['exact', 'in'],
-            'uniqueness': ['gt', 'gte', 'lt', 'lte', 'range'],
-            'completed_on': ['year', 'year__gt', 'year__gte', 'year__lt', 'year__lte', 'range'],
-            'approved_on': ['year', 'year__gt', 'year__gte', 'year__lt', 'year__lte', 'range'],
-            'created_on': ['year', 'year__gt', 'year__gte', 'year__lt', 'year__lte', 'range', 'date', 'date__range'],
+            'title':         ['icontains', 'exact', 'in'],
+            'status':        ['exact', 'in'],
+            'project_group': ['exact', 'in'],
+            'uniqueness':    ['gt', 'gte', 'lt', 'lte', 'range'],
+            'completed_on':  ['lt', 'lte', 'gt', 'gte', 'year', 'year__gt', 'year__gte', 'year__lt', 'year__lte', 'range', 'date', 'date__range'],
+            'approved_on':   ['lt', 'lte', 'gt', 'gte', 'year', 'year__gt', 'year__gte', 'year__lt', 'year__lte', 'range', 'date', 'date__range'],
+            'created_on':    ['lt', 'lte', 'gt', 'gte', 'year', 'year__gt', 'year__gte', 'year__lt', 'year__lte', 'range', 'date', 'date__range'],
         }
 
 

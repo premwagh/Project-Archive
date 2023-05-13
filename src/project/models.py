@@ -134,9 +134,9 @@ class ProjectIdea(TimeStampModelMixin, models.Model):
     tags = TaggableManager()
     status = models.CharField(
         _('Status'), choices=StatusChoices.choices, default=StatusChoices.NEW)
-    submitted_on = models.DateField(_('Submitted On'), null=True, blank=True, editable=False)
-    approved_on = models.DateField(_('Approved On'), null=True, blank=True, editable=False)
-    completed_on = models.DateField(_('Completed On'), null=True, blank=True, editable=False)
+    submitted_on = models.DateTimeField(_('Submitted On'), null=True, blank=True, editable=False)
+    approved_on = models.DateTimeField(_('Approved On'), null=True, blank=True, editable=False)
+    completed_on = models.DateTimeField(_('Completed On'), null=True, blank=True, editable=False)
 
     def __str__(self) -> str:
         return self.title
